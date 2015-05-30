@@ -49,6 +49,8 @@ import time
 ### Constants:
 DEBUG = True
 DD_BS = 512  # Bytes read & written by dd
+S_STATE_FLAGS = [["1","Cleanly unmounted"],["2","Errors detected"],["4","Orphans being recovered"]]
+
 
 ### Functions:
 
@@ -142,12 +144,33 @@ def grep_srch(std_in, pattern):
     f.write(std_in)
   return sys_call("sudo dd status=none if=rr.tmp | grep \"" + pattern + "\"")
 
-# convert bases using bc. ok
+# ok
 def base_conv(value, src_base="16", dst_base="A"):
+  """Base conversion.
+  
+  Created:
+   14-07-??
+  Last Modified:
+   15-05-30
+   
+  Params:
+   value - Value to be converted.
+   src_base - Base of value.
+   dst_base - Base to convert to.
+  Return:
+   Converted value.
+  
+  Notes:
+   n/a
+  History:
+   15-05-30
+    remove newline from return value (might have to recheck other functions that use it)
+    added docstring
+  """
   res = sys_call("echo 'ibase=" + src_base + ";obase=" + dst_base + ";" + value.upper() + "' | bc")
   if DEBUG and res == "":
     print "base_conv:", value
-  return res
+  return res.strip("\n")
 
 # converts hex data to its actual value. test
 def hex_conv(hex_data, size=[4,1,"le32"]):
@@ -536,7 +559,7 @@ def get_struct_value(struct, label):
   """
   for data in struct:
     if data[2] == label:
-      return data[3].strip('\n')
+      return data[3].strip("\n")
   return "Error: Label " + label + " not found!"
 
 # ok
@@ -567,10 +590,50 @@ def get_superblock(device, skip):
     return ["Error: Invalid superblock!"]
   return sb
 
-# test
+# ok
 def secs_to_dtime(seconds):
+  """Converts seconds since epoch to formatted date/time.
+  
+  Created:
+   15-05-30
+  Last Modified:
+   n/a
+   
+  Params:
+   seconds - Seconds since epoch time.
+  Return:
+   Formatted time.
+  
+  Notes:
+   n/a
+  History:
+   n/a
+  """
   return time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(float(seconds)))
 
+# test
+def read_flags(flags, values):
+  set_flags = []
+  flags = base_conv(flags, "16", "2")
+  #flags = flags[::-1]  # reverse string
+  print flags, len(flags), values
+  
+  for inc in range(len(flags)):
+    if flags[inc] == "1":
+      set_flags.append(values[inc][1])
+  return set_flags
+
+  for val in values:
+    bit = base_conv(val[0], "16", "2")
+    
+    if len(flags) == 1 and flags == "1":
+      set_flags.append(val[1])
+      return set_flags
+    
+    print flags, set_flags
+    if flags[-(len(bit)-1)] == "1":
+      set_flags.append(val[1])
+  
 ### Tests
 #print grep_srch(dd_read("/dev/sdb", 4), "sys")
 #print base_conv("88")
@@ -585,7 +648,9 @@ def secs_to_dtime(seconds):
 #print pretty_parse("/dev/sda2", ["ext4_inode.struct", 256, 20], "250gb-p2-inode-8456.txt", 8456, 10)
 #print get_superblock("/dev/sda2", 2)
 #print get_struct_value(dump_parse(dd_read("/dev/sda2", 2, 2), file_read("ext4_super_block.struct")), "s_inodes_per_group")
-print secs_to_dtime(get_struct_value(get_superblock("/dev/sda2", 2), "s_mtime"))
+#print secs_to_dtime(get_struct_value(get_superblock("/dev/sda2", 2), "s_mtime"))
+print read_flags(get_struct_value(get_superblock("/dev/sda2", 2), "s_state"), S_STATE_FLAGS)
+
 
 ### Notes:
 # Error caused by unimplemented checkpoint
