@@ -21,6 +21,7 @@
 # Imports
 import subprocess
 import string
+import time
 
 """Raw Reader.
   
@@ -40,12 +41,14 @@ import string
     - value mapper
     - flags mapper
     - read extent tree
+    - change to OOP
   History:
    n/a
 """
 
 ### Constants:
 DEBUG = True
+DD_BS = 512  # Bytes read & written by dd
 
 ### Functions:
 
@@ -263,8 +266,25 @@ def type_to_size(d_type):
     print "\n", "Error: unimplemented data type: " + size[0] + " in type_to_size", "\n"
   return size
 
-# test
+# ok
 def hex_dump(hex_data):
+  """Split and concatenate data forms.
+  
+  Created:
+   15-05-30
+  Last Modified:
+   n/a
+   
+  Params:
+   n/a
+  Return:
+   n/a
+  
+  Notes:
+   n/a
+  History:
+   n/a
+  """
   hex_data = string.split(hex_data, "\n")
   data = ""
   a_data = ""
@@ -281,8 +301,25 @@ def hex_dump(hex_data):
   data = string.split(data.strip(' '), " ")
   return [data, a_data]
 
-# test
+# ok
 def data_parse(data, params="00 char[8] unknown", struct_size=1024, struct_rpt=1):
+  """Create struct array of data.
+  
+  Created:
+   15-05-30
+  Last Modified:
+   n/a
+   
+  Params:
+   n/a
+  Return:
+   n/a
+  
+  Notes:
+   n/a
+  History:
+   n/a
+  """
   params = string.split(params, "\n")	
   hex_parse = []
   
@@ -292,7 +329,6 @@ def data_parse(data, params="00 char[8] unknown", struct_size=1024, struct_rpt=1
 	continue
       line = string.split(line, " ")
       start = int(base_conv(line[0])) + rpt * struct_size
-      print "length: ", len(line)
       size = type_to_size(line[1])
       stop = start + (size[0] * size[1])
       
@@ -316,7 +352,7 @@ def data_parse(data, params="00 char[8] unknown", struct_size=1024, struct_rpt=1
   return hex_parse
 
 # ok
-def dump_parse(hex_data, params="00 char[8] unknown", struct_size=1024, struct_rpt=1):
+def dump_parse(hex_data, params, struct_size=1024, struct_rpt=1):
   """Breaks apart 'hexdump -C' output using a struct.
   
   Created:
@@ -477,6 +513,63 @@ def hex_to_bit(data):
 def count_bits(data, bit):
   pass
 
+# ok
+def get_struct_value(struct, label):
+  """Find a field value in a parsed data structure.
+  
+  Created:
+   15-05-30
+  Last Modified:
+   n/a
+   
+  Params:
+   struct - Structured data as returned by data_parse.
+   label - Field from a struct file.
+  Return:
+   Data indexed by the field label.
+  
+  Notes:
+   15-05-30
+    convert any returned number to prevent bug; possible extra spaces returned in string
+  History:
+   n/a
+  """
+  for data in struct:
+    if data[2] == label:
+      return data[3].strip('\n')
+  return "Error: Label " + label + " not found!"
+
+# ok
+def get_superblock(device, skip):
+  """Returns a parsed superblock.
+  
+  Created:
+   15-05-30
+  Last Modified:
+   n/a
+   
+  Params:
+   device - Device/image to read.
+   offset - Offset to superblock.
+  Return:
+   Parsed superblock.
+  
+  Notes:
+   n/a
+  History:
+   n/a
+  """
+  sb = dump_parse(dd_read(device, 2, skip), file_read("ext4_super_block.struct"))
+  magic = int(get_struct_value(sb, "s_magic"))
+  
+  if magic != 61267:
+    # magic check
+    return ["Error: Invalid superblock!"]
+  return sb
+
+# test
+def secs_to_dtime(seconds):
+  return time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(float(seconds)))
 
 ### Tests
 #print grep_srch(dd_read("/dev/sdb", 4), "sys")
@@ -488,9 +581,11 @@ def count_bits(data, bit):
 #print pretty_parse("/media/skeledrew/Seagate\ Expansion\ Drive/250gb/sb_15-05-25_08-17.txt", "ext4_super_block.struct")
 #print pretty_parse("/media/skeledrew/Seagate\ Expansion\ Drive/1tb/15-04-06.img", "ext4_super_block.struct", "", 974397458)
 #print pretty_parse("/dev/sda2", ["ext4_group_desc_32.struct", 32, 16], "250gb-p2-gdt-8.txt", 8)
-print pretty_parse("/dev/sda2", ["ext4_group_desc_32.struct", 32, 16], "", 8)
+#print pretty_parse("/dev/sda2", ["ext4_group_desc_32.struct", 32, 16], "", 8)
 #print pretty_parse("/dev/sda2", ["ext4_inode.struct", 256, 20], "250gb-p2-inode-8456.txt", 8456, 10)
-
+#print get_superblock("/dev/sda2", 2)
+#print get_struct_value(dump_parse(dd_read("/dev/sda2", 2, 2), file_read("ext4_super_block.struct")), "s_inodes_per_group")
+print secs_to_dtime(get_struct_value(get_superblock("/dev/sda2", 2), "s_mtime"))
 
 ### Notes:
 # Error caused by unimplemented checkpoint
