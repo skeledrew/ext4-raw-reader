@@ -266,7 +266,6 @@ def type_to_size(d_type):
 # test
 def hex_dump(hex_data):
   hex_data = string.split(hex_data, "\n")
-  params = string.split(params, "\n")
   data = ""
   a_data = ""
   
@@ -284,6 +283,7 @@ def hex_dump(hex_data):
 
 # test
 def data_parse(data, params="00 char[8] unknown", struct_size=1024, struct_rpt=1):
+  params = string.split(params, "\n")	
   hex_parse = []
   
   for rpt in range(struct_rpt):
@@ -292,20 +292,21 @@ def data_parse(data, params="00 char[8] unknown", struct_size=1024, struct_rpt=1
 	continue
       line = string.split(line, " ")
       start = int(base_conv(line[0])) + rpt * struct_size
+      print "length: ", len(line)
       size = type_to_size(line[1])
       stop = start + (size[0] * size[1])
       
       if size[2] == "char":
-	element = a_data[start:stop]
+	element = data[1][start:stop]
       
       elif size[2] == "byte":
 	element = ""
-	for d in data[start:stop]:
+	for d in data[0][start:stop]:
 	  element += d + " "
 	element.strip(' ')
 	  
       else:
-	element = hex_conv(data[start:stop], size)
+	element = hex_conv(data[0][start:stop], size)
       
       if DEBUG and element == "":
 	line.append("dump_parse error!")
@@ -351,50 +352,7 @@ def dump_parse(hex_data, params="00 char[8] unknown", struct_size=1024, struct_r
    15-05-26
     manage 'byte' type
   """
-  hex_data = string.split(hex_data, "\n")
-  params = string.split(params, "\n")
-  data = ""
-  a_data = ""
-  
-  for line in hex_data:
-    # concat lines of data (hex and ascii)
-    if line[0] == "#":  # Ignore lines starting with '#'
-      continue
-    line = string.split(line, "  ")
-    if len(line) == 1:
-      break
-    data += line[1] + " " + line[2] + " "
-    a_data += line[3].strip("|")
-  data = string.split(data.strip(' '), " ")
-  hex_parse = []
-  
-  for rpt in range(struct_rpt):
-    for line in params:
-      if len(line) > 1 and line[0] == "#":  # Ignore lines starting with '#'
-	continue
-      line = string.split(line, " ")
-      start = int(base_conv(line[0])) + rpt * struct_size
-      size = type_to_size(line[1])
-      stop = start + (size[0] * size[1])
-      
-      if size[2] == "char":
-	element = a_data[start:stop]
-      
-      elif size[2] == "byte":
-	element = ""
-	for d in data[start:stop]:
-	  element += d + " "
-	element.strip(' ')
-	  
-      else:
-	element = hex_conv(data[start:stop], size)
-      
-      if DEBUG and element == "":
-	line.append("dump_parse error!")
-	print "dump_parse:", data[start:stop]
-      line.append(element)
-      hex_parse.append(line)
-  return hex_parse
+  return data_parse(hex_dump(hex_data), params, struct_size, struct_rpt)
     
 # reads partition table on device
 def part_read(src):
@@ -530,8 +488,8 @@ def count_bits(data, bit):
 #print pretty_parse("/media/skeledrew/Seagate\ Expansion\ Drive/250gb/sb_15-05-25_08-17.txt", "ext4_super_block.struct")
 #print pretty_parse("/media/skeledrew/Seagate\ Expansion\ Drive/1tb/15-04-06.img", "ext4_super_block.struct", "", 974397458)
 #print pretty_parse("/dev/sda2", ["ext4_group_desc_32.struct", 32, 16], "250gb-p2-gdt-8.txt", 8)
-#print pretty_parse("/dev/sda2", ["ext4_group_desc_32.struct", 32, 16], "", 8)
-print pretty_parse("/dev/sda2", ["ext4_inode.struct", 256, 20], "250gb-p2-inode-8456.txt", 8456, 10)
+print pretty_parse("/dev/sda2", ["ext4_group_desc_32.struct", 32, 16], "", 8)
+#print pretty_parse("/dev/sda2", ["ext4_inode.struct", 256, 20], "250gb-p2-inode-8456.txt", 8456, 10)
 
 
 ### Notes:
