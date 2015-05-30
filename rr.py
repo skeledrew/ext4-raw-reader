@@ -263,6 +263,57 @@ def type_to_size(d_type):
     print "\n", "Error: unimplemented data type: " + size[0] + " in type_to_size", "\n"
   return size
 
+# test
+def hex_dump(hex_data):
+  hex_data = string.split(hex_data, "\n")
+  params = string.split(params, "\n")
+  data = ""
+  a_data = ""
+  
+  for line in hex_data:
+    # concat lines of data (hex and ascii)
+    if line[0] == "#":  # Ignore lines starting with '#'
+      continue
+    line = string.split(line, "  ")
+    if len(line) == 1:
+      break
+    data += line[1] + " " + line[2] + " "
+    a_data += line[3].strip("|")
+  data = string.split(data.strip(' '), " ")
+  return [data, a_data]
+
+# test
+def data_parse(data, params="00 char[8] unknown", struct_size=1024, struct_rpt=1):
+  hex_parse = []
+  
+  for rpt in range(struct_rpt):
+    for line in params:
+      if len(line) > 1 and line[0] == "#":  # Ignore lines starting with '#'
+	continue
+      line = string.split(line, " ")
+      start = int(base_conv(line[0])) + rpt * struct_size
+      size = type_to_size(line[1])
+      stop = start + (size[0] * size[1])
+      
+      if size[2] == "char":
+	element = a_data[start:stop]
+      
+      elif size[2] == "byte":
+	element = ""
+	for d in data[start:stop]:
+	  element += d + " "
+	element.strip(' ')
+	  
+      else:
+	element = hex_conv(data[start:stop], size)
+      
+      if DEBUG and element == "":
+	line.append("dump_parse error!")
+	print "dump_parse:", data[start:stop]
+      line.append(element)
+      hex_parse.append(line)
+  return hex_parse
+
 # ok
 def dump_parse(hex_data, params="00 char[8] unknown", struct_size=1024, struct_rpt=1):
   """Breaks apart 'hexdump -C' output using a struct.
