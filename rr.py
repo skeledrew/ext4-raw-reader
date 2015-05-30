@@ -615,8 +615,8 @@ def secs_to_dtime(seconds):
 def read_flags(flags, values):
   set_flags = []
   flags = base_conv(flags, "16", "2")
-  #flags = flags[::-1]  # reverse string
-  print flags, len(flags), values
+  flags = flags[::-1]  # reverse string
+  #print flags, len(flags), values
   
   for inc in range(len(flags)):
     if flags[inc] == "1":
