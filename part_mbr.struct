@@ -1,0 +1,6 @@
+0000 u8[446] mbr_bootstrap_code
+01BE le16 mbr_entry_1
+01CE le16 mbr_entry_2
+01DE le16 mbr_entry_3
+01EE le16 mbr_entry_4
+01FE u8[2] mbr_magic

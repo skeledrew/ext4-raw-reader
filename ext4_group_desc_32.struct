@@ -1,0 +1,12 @@
+00 le32 bg_block_bitmap_lo
+04 le32 bg_inode_bitmap_lo
+08 le32 bg_inode_table_lo
+0C le16 bg_free_blocks_count_lo
+0E le16 bg_free_inodes_count_lo
+10 le16 bg_used_dirs_count_lo
+12 le16 bg_flags
+14 le32 bg_exclude_bitmap_lo
+18 le16 bg_block_bitmap_csum_lo
+1A le16 bg_inode_bitmap_csum_lo
+1C le16 bg_itable_unused_lo
+1E le16 bg_checksum

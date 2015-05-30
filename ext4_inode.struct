@@ -1,0 +1,30 @@
+00 le16 i_mode
+02 le16 i_uid
+04 le32 i_size_lo
+08 le32 i_atime
+0C le32 i_ctime
+10 le32 i_mtime
+14 le32 i_dtime
+18 le16 i_gid
+1A le16 i_links_count
+1C le32 i_blocks_lo
+20 le32 i_flags
+# not sure what to do about a byte size introduced in inode struct
+24 byte[4] osd1
+28 byte[60] i_block
+64 le32 i_generation
+68 le32 i_file_acl_lo
+6C le32 i_size_high/i_dir_acl
+70 le32 i_obso_faddr
+74 byte[12] osd2
+80 le16 i_extra_isize
+82 le16 i_checksum_hi
+84 le32 i_ctime_extra
+88 le32 i_mtime_extra
+8C le32 i_atime_extra
+90 le32 i_crtime
+94 le32 i_crtime_extra
+98 le32 i_version_hi
+# custom padding added to make inode 256
+9C byte[100] pad_reserved
+# ensure there are no extra newlines
