@@ -39,7 +39,7 @@ import time
    TODO
     - superblock searcher
     - value mapper
-    - flags mapper
+    - flags mapper.
     - read extent tree
     - change to OOP
   History:
@@ -613,27 +613,91 @@ def secs_to_dtime(seconds):
 
 # test
 def read_flags(flags, values):
-  set_flags = []
+  """Read a set of flags.
+  
+  Created:
+   15-05-30
+  Last Modified:
+   n/a
+   
+  Params:
+   n/a
+  Return:
+   n/a
+  
+  Notes:
+   n/a
+  History:
+   n/a
+  """
+  set_flags = "|"
   flags = base_conv(flags, "16", "2")
   flags = flags[::-1]  # reverse string
   #print flags, len(flags), values
   
   for inc in range(len(flags)):
     if flags[inc] == "1":
-      set_flags.append(values[inc][1])
+      set_flags += values[inc][1] + "|"
   return set_flags
 
-  for val in values:
-    bit = base_conv(val[0], "16", "2")
-    
-    if len(flags) == 1 and flags == "1":
-      set_flags.append(val[1])
-      return set_flags
-    
-    print flags, set_flags
-    if flags[-(len(bit)-1)] == "1":
-      set_flags.append(val[1])
+# test
+def read_struct(struct_file):
+  """Load a struct from a file.
   
+  Created:
+   15-05-30
+  Last Modified:
+   n/a
+   
+  Params:
+   struct_file - Name of file with the struct.
+  Return:
+   Struct as an array.
+  
+  Notes:
+   15-05-30
+    first line has the delimiter character
+  History:
+   n/a
+  """
+  struct = file_read(struct_file).split("\n")
+  sep = struct[0]
+  struct.remove(sep)
+  new_struct = []
+  
+  for line in struct:
+    if line[0] == "#":
+      # skip comment line
+      continue
+    new_struct.append(line.split(sep))
+  return new_struct
+
+# test
+def read_opt(opt, opts):
+  """Read an option.
+  
+  Created:
+   15-05-30
+  Last Modified:
+   n/a
+   
+  Params:
+   n/a
+  Return:
+   n/a
+  
+  Notes:
+   n/a
+  History:
+   n/a
+  """
+  #opts = read_struct(opts)
+  
+  for option in opts:
+    if opt == option[0]:
+      return option[1]
+
+
 ### Tests
 #print grep_srch(dd_read("/dev/sdb", 4), "sys")
 #print base_conv("88")
@@ -649,8 +713,8 @@ def read_flags(flags, values):
 #print get_superblock("/dev/sda2", 2)
 #print get_struct_value(dump_parse(dd_read("/dev/sda2", 2, 2), file_read("ext4_super_block.struct")), "s_inodes_per_group")
 #print secs_to_dtime(get_struct_value(get_superblock("/dev/sda2", 2), "s_mtime"))
-print read_flags(get_struct_value(get_superblock("/dev/sda2", 2), "s_state"), S_STATE_FLAGS)
-
+print read_flags(get_struct_value(get_superblock("/dev/sda2", 2), "s_state"), read_struct("s_state.flags"))
+print read_opt(get_struct_value(get_superblock("/dev/sda2", 2), "s_errors"), read_struct("s_errors.opts"))
 
 ### Notes:
 # Error caused by unimplemented checkpoint
