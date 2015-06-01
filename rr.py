@@ -219,7 +219,7 @@ def hex_conv(hex_data, size=[4,1,"le32"]):
     value = hex_data
   value = "".join(value)
   if DEBUG and value == "":
-    print "hex_conv:", size, hex_data
+    print "Error! hex_conv:", size, hex_data
     return "hex_conv error!"
   return base_conv(value)
 
@@ -585,7 +585,7 @@ def get_superblock(device, skip):
   Created:
    15-05-30
   Last Modified:
-   15-06-01
+   15-05-31
    
   Params:
    device - Device/image to read.
@@ -596,7 +596,7 @@ def get_superblock(device, skip):
   Notes:
    n/a
   History:
-   15-06-01
+   15-05-31
     convert int strings to ints
      array has indexes that should be skipped
   """
@@ -673,7 +673,7 @@ def read_flags(flags, values):
    n/a
   
   Notes:
-   15-06-01
+   15-05-31
     BUG: need to search the values instead of assume all bits are represented...
   History:
    n/a
@@ -737,7 +737,7 @@ def read_opt(opt, opts):
   Notes:
    n/a
   History:
-   15-06-01
+   15-05-31
     fixed type error
   """
   #opts = read_struct(opts)
@@ -748,7 +748,24 @@ def read_opt(opt, opts):
       return option[1]
 
 def get_group_desc(device, skip):
-  pass
+  """Docstring template.
+  
+  Created:
+   15-06-01
+  Last Modified:
+   n/a
+   
+  Params:
+   n/a
+  Return:
+   n/a
+  
+  Notes:
+   n/a
+  History:
+   n/a
+  """
+  sb = get_superblock(device, skip)
 
 ### Tests
 #print grep_srch(dd_read("/dev/sdb", 4), "sys")
