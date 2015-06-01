@@ -1,0 +1,14 @@
+	
+0001	Print debugging info upon (re)mount.
+0002	New files take the gid of the containing directory.
+0004	Support userspace-provided extended attributes.
+0008	Support POSIX access control lists (ACLs).
+0010	Do not support 32-bit UIDs.
+0020	All data and metadata are commited to the journal.
+0040	All data are flushed to the disk before metadata are committed to the journal.
+# should probably check this value...
+0060	Data ordering is not preserved; data may be written after the metadata has been written.
+0100	Disable write flushes.
+0200	Track which blocks in a filesystem are metadata and therefore should not be used as data blocks.
+0400	Enable DISCARD support, where the storage device is told about blocks becoming unused.
+0800	Disable delayed allocation.

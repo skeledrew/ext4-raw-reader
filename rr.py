@@ -559,17 +559,17 @@ def get_struct_value(struct, label):
   """
   for data in struct:
     if data[2] == label:
-      return data[3].strip("\n")
+      return data[3]
   return "Error: Label " + label + " not found!"
 
-# ok
+# test
 def get_superblock(device, skip):
   """Returns a parsed superblock.
   
   Created:
    15-05-30
   Last Modified:
-   n/a
+   15-06-01
    
   Params:
    device - Device/image to read.
@@ -580,7 +580,9 @@ def get_superblock(device, skip):
   Notes:
    n/a
   History:
-   n/a
+   15-06-01
+    convert int strings to ints
+     array has indexes that should be skipped
   """
   sb = dump_parse(dd_read(device, 2, skip), file_read("ext4_super_block.struct"))
   magic = int(get_struct_value(sb, "s_magic"))
@@ -588,6 +590,34 @@ def get_superblock(device, skip):
   if magic != 61267:
     # magic check
     return ["Error: Invalid superblock!"]
+  non_ints = [16, 17, 23, 24, 28, 29, 30, 31, 32, 33, 34, 38, 42, 46, 49, 57, 63, 64, 72, 78, 79, 85, 86]
+  
+  for num in range(87):
+    # convert strings to ints
+    if non_ints.count(num) != 0:
+      # skip non-ints
+      continue
+    #print num, sb[num][2], sb[num][3]
+    sb[num][3] = int(sb[num][3])
+  sb[6][3] = 2 ** (10 + sb[6][3])
+  sb[7][3] = 2 ** sb[7][3]
+  sb[11][3] = secs_to_dtime(sb[11][3])
+  sb[12][3] = secs_to_dtime(sb[12][3])
+  sb[16][3] = read_flags(sb[16][3], read_struct("s_state.flags"))
+  sb[17][3] = read_opt(sb[17][3], read_struct("s_errors.opts"))
+  sb[19][3] = secs_to_dtime(sb[19][3])
+  #sb[20][3] = secs_to_dtime(sb[20][3])
+  sb[21][3] = read_opt(sb[21][3], read_struct("s_creator_os.opts"))
+  sb[22][3] = read_opt(sb[22][3], read_struct("s_rev_level.opts"))
+  sb[28][3] = read_flags(sb[28][3], read_struct("s_feature_compat.flags"))
+  sb[29][3] = read_flags(sb[29][3], read_struct("s_feature_incompat.flags"))
+  sb[30][3] = read_flags(sb[30][3], read_struct("s_feature_ro_compat.flags"))
+  sb[43][3] = read_opt(sb[43][3], read_struct("s_def_hash_version.opts"))
+  sb[46][3] = read_flags(sb[46][3], read_struct("s_default_mount_opts.flags"))
+  sb[48][3] = secs_to_dtime(sb[48][3])
+  sb[62][3] = 2 ** sb[62][3]
+  sb[71][3] = secs_to_dtime(sb[71][3])
+  sb[76][3] = secs_to_dtime(sb[76][3])
   return sb
 
 # ok
@@ -626,7 +656,8 @@ def read_flags(flags, values):
    n/a
   
   Notes:
-   n/a
+   15-06-01
+    BUG: need to search the values instead of assume all bits are represented...
   History:
    n/a
   """
@@ -710,11 +741,11 @@ def read_opt(opt, opts):
 #print pretty_parse("/dev/sda2", ["ext4_group_desc_32.struct", 32, 16], "250gb-p2-gdt-8.txt", 8)
 #print pretty_parse("/dev/sda2", ["ext4_group_desc_32.struct", 32, 16], "", 8)
 #print pretty_parse("/dev/sda2", ["ext4_inode.struct", 256, 20], "250gb-p2-inode-8456.txt", 8456, 10)
-#print get_superblock("/dev/sda2", 2)
-#print get_struct_value(dump_parse(dd_read("/dev/sda2", 2, 2), file_read("ext4_super_block.struct")), "s_inodes_per_group")
+print get_superblock("/dev/sda2", 2)
+#print get_struct_value(dump_parse(dd_read("/dev/sda2", 2, 2), file_read("ext4_super_block.struct")), "s_log_block_size")
 #print secs_to_dtime(get_struct_value(get_superblock("/dev/sda2", 2), "s_mtime"))
-print read_flags(get_struct_value(get_superblock("/dev/sda2", 2), "s_state"), read_struct("s_state.flags"))
-print read_opt(get_struct_value(get_superblock("/dev/sda2", 2), "s_errors"), read_struct("s_errors.opts"))
+#print read_flags(get_struct_value(get_superblock("/dev/sda2", 2), "s_state"), read_struct("s_state.flags"))
+#print read_opt(get_struct_value(get_superblock("/dev/sda2", 2), "s_errors"), read_struct("s_errors.opts"))
 
 ### Notes:
 # Error caused by unimplemented checkpoint

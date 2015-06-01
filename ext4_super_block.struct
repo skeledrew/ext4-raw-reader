@@ -70,14 +70,17 @@
 0198 le32 s_frst_error_time
 019C le32 s_first_error_ino
 01A0 le64 s_first_error_block
-01A8 u8[32] s_first_error_func
+# change from type u8
+01A8 char[32] s_first_error_func
 01C8 le32 s_first_error_line
 01CC le32 s_last_error_time
 01D0 le32 s_last_error_ino
 01D4 le32 s_last_error_line
 01D8 le64 s_last_error_block
-01E0 u8[32] s_last_error_func
-0200 u8[64] s_mount_opts
+# change from type u8
+01E0 char[32] s_last_error_func
+# change from type u8 to grab ASCII
+0200 char[64] s_mount_opts
 0240 le32 s_usr_quota_inum
 0244 le32 s_grp_quota_inum
 0248 le32 s_overhead_blocks
