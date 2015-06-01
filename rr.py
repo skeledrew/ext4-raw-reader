@@ -590,7 +590,7 @@ def get_superblock(device, skip):
   if magic != 61267:
     # magic check
     return ["Error: Invalid superblock!"]
-  non_ints = [16, 17, 23, 24, 28, 29, 30, 31, 32, 33, 34, 38, 42, 46, 49, 57, 63, 64, 72, 78, 79, 85, 86]
+  non_ints = [16, 23, 24, 28, 29, 30, 31, 32, 33, 34, 38, 42, 46, 49, 57, 63, 64, 72, 78, 79, 85, 86]
   
   for num in range(87):
     # convert strings to ints
@@ -608,16 +608,16 @@ def get_superblock(device, skip):
   sb[19][3] = secs_to_dtime(sb[19][3])
   #sb[20][3] = secs_to_dtime(sb[20][3])
   sb[21][3] = read_opt(sb[21][3], read_struct("s_creator_os.opts"))
-  sb[22][3] = read_opt(sb[22][3], read_struct("s_rev_level.opts"))
-  sb[28][3] = read_flags(sb[28][3], read_struct("s_feature_compat.flags"))
-  sb[29][3] = read_flags(sb[29][3], read_struct("s_feature_incompat.flags"))
-  sb[30][3] = read_flags(sb[30][3], read_struct("s_feature_ro_compat.flags"))
-  sb[43][3] = read_opt(sb[43][3], read_struct("s_def_hash_version.opts"))
-  sb[46][3] = read_flags(sb[46][3], read_struct("s_default_mount_opts.flags"))
-  sb[48][3] = secs_to_dtime(sb[48][3])
-  sb[62][3] = 2 ** sb[62][3]
-  sb[71][3] = secs_to_dtime(sb[71][3])
-  sb[76][3] = secs_to_dtime(sb[76][3])
+  #sb[22][3] = read_opt(sb[22][3], read_struct("s_rev_level.opts"))
+  #sb[28][3] = read_flags(sb[28][3], read_struct("s_feature_compat.flags"))
+  #sb[29][3] = read_flags(sb[29][3], read_struct("s_feature_incompat.flags"))
+  #sb[30][3] = read_flags(sb[30][3], read_struct("s_feature_ro_compat.flags"))
+  #sb[43][3] = read_opt(sb[43][3], read_struct("s_def_hash_version.opts"))
+  #sb[46][3] = read_flags(sb[46][3], read_struct("s_default_mount_opts.flags"))
+  #sb[48][3] = secs_to_dtime(sb[48][3])
+  #sb[62][3] = 2 ** sb[62][3]
+  #sb[71][3] = secs_to_dtime(sb[71][3])
+  #sb[76][3] = secs_to_dtime(sb[76][3])
   return sb
 
 # ok
@@ -641,7 +641,7 @@ def secs_to_dtime(seconds):
   """
   return time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(float(seconds)))
 
-# test
+# ok
 def read_flags(flags, values):
   """Read a set of flags.
   
@@ -671,7 +671,7 @@ def read_flags(flags, values):
       set_flags += values[inc][1] + "|"
   return set_flags
 
-# test
+# ok
 def read_struct(struct_file):
   """Load a struct from a file.
   
@@ -720,14 +720,19 @@ def read_opt(opt, opts):
   Notes:
    n/a
   History:
-   n/a
+   15-06-01
+    fixed type error
   """
   #opts = read_struct(opts)
+  #print opt
   
   for option in opts:
-    if opt == option[0]:
+    print option, opt
+    if opt == int(option[0]):
       return option[1]
 
+def get_group_desc(device, skip):
+  pass
 
 ### Tests
 #print grep_srch(dd_read("/dev/sdb", 4), "sys")
