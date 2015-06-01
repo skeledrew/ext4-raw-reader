@@ -461,13 +461,13 @@ def table_read(data, struct, struct_size):
   pass
 
 # ok
-def offset_to_block(offset, fix=0, size=512):
+def offset_to_block(offset, fix=0, size=DD_BS):
   """Convert hex offset to lba?
   
   Created:
    14-07-??
   Last Modified:
-   15-05-24
+   15-06-01
    
   Params:
    offset - Hex offset value as string.
@@ -483,6 +483,8 @@ def offset_to_block(offset, fix=0, size=512):
     added 'fix' param to quickly modify value to a block boundary, etc
      (eg. use -56 to get superblock start)
     fixed type conversion.
+   15-06-01
+    param now used constant instead of literal.
   """
   block = []
   offset = int(base_conv(offset)) + fix
@@ -747,8 +749,9 @@ def read_opt(opt, opts):
     if opt == int(option[0]):
       return option[1]
 
+# test
 def get_group_desc(device, skip):
-  """Docstring template.
+  """Return an array of parsed block group descriptors.
   
   Created:
    15-06-01
@@ -756,16 +759,46 @@ def get_group_desc(device, skip):
    n/a
    
   Params:
-   n/a
+   device - Device/image to read from.
+   skip - LBA to superblock
   Return:
-   n/a
+   Array of parsed bgds.
   
   Notes:
-   n/a
+   15-06-01
+    This struct may be either 32 or 64 bytes long.
+    Need to find how to calculate values using dd and sb block sizes, etc [BUGFIX1]
   History:
    n/a
   """
   sb = get_superblock(device, skip)
+  block_size = get_struct_value(sb, "s_log_block_size")
+  flex_bg = get_struct_value(sb, "s_log_groups_per_flex")  # gives # of bgd
+  bgd_file = "ext4_group_desc_32.struct"
+  bgd_size = 32
+  
+  if get_struct_value(sb, "s_desc_size") > 32 and get_struct_value(sb, "s_feature_incompat").count("|INCOMPAT_64BIT|") != 0:
+    bgd_file = "ext4_group_desc_64.struct"
+  bgd_loc = block_size / DD_BS  # points to block after sb block
+  bgd_loc += skip - 2  # BUGFIX1: take offset into first block from calculation
+  #bgd_size = bgd_size * flex_bg / DD_BS
+  bgd = dump_parse(dd_read(device, bgd_size * flex_bg / DD_BS, bgd_loc), 
+		   file_read(bgd_file), bgd_size, flex_bg)
+  b = []
+  
+  non_ints = [6, 11]
+  
+  for arr in range(flex_bg):
+    for num in range(12):
+      # convert strings to ints
+      if non_ints.count(num) != 0:
+	# skip non-ints
+	continue
+      #print arr, num, bgd[num][2], bgd[num][3]
+      bgd[num+arr*12][3] = int(bgd[num+arr*12][3])
+    bgd[6+arr*12][3] = read_flags(bgd[6+arr*12][3], read_struct("bg_flags.flags"))
+    b.append(bgd[arr*12:arr*12+12])
+  return b
 
 ### Tests
 #print grep_srch(dd_read("/dev/sdb", 4), "sys")
@@ -777,13 +810,15 @@ def get_group_desc(device, skip):
 #print pretty_parse("/media/skeledrew/Seagate\ Expansion\ Drive/250gb/sb_15-05-25_08-17.txt", "ext4_super_block.struct")
 #print pretty_parse("/media/skeledrew/Seagate\ Expansion\ Drive/1tb/15-04-06.img", "ext4_super_block.struct", "", 974397458)
 #print pretty_parse("/dev/sda2", ["ext4_group_desc_32.struct", 32, 16], "250gb-p2-gdt-8.txt", 8)
-#print pretty_parse("/dev/sda2", ["ext4_group_desc_32.struct", 32, 16], "", 8)
+#print pretty_parse("/dev/sda2", ["ext4_group_desc_32.struct", 32, 1], "", 8)
 #print pretty_parse("/dev/sda2", ["ext4_inode.struct", 256, 20], "250gb-p2-inode-8456.txt", 8456, 10)
-print get_superblock("/dev/sda2", 2)
+#print get_superblock("/dev/sda2", 2)
 #print get_struct_value(dump_parse(dd_read("/dev/sda2", 2, 2), file_read("ext4_super_block.struct")), "s_log_block_size")
 #print secs_to_dtime(get_struct_value(get_superblock("/dev/sda2", 2), "s_mtime"))
 #print read_flags(get_struct_value(get_superblock("/dev/sda2", 2), "s_state"), read_struct("s_state.flags"))
 #print read_opt(get_struct_value(get_superblock("/dev/sda2", 2), "s_errors"), read_struct("s_errors.opts"))
+print get_group_desc("/dev/sda2", 2)
+
 
 ### Notes:
 # Error caused by unimplemented checkpoint
