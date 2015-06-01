@@ -590,9 +590,9 @@ def get_superblock(device, skip):
   if magic != 61267:
     # magic check
     return ["Error: Invalid superblock!"]
-  non_ints = [16, 23, 24, 28, 29, 30, 31, 32, 33, 34, 38, 42, 46, 49, 57, 63, 64, 72, 78, 79, 85, 86]
+  non_ints = [16, 23, 24, 28, 29, 30, 31, 32, 33, 34, 38, 42, 46, 49, 55, 61, 62, 72, 78, 79, 83, 84]
   
-  for num in range(87):
+  for num in range(85):
     # convert strings to ints
     if non_ints.count(num) != 0:
       # skip non-ints
@@ -608,16 +608,17 @@ def get_superblock(device, skip):
   sb[19][3] = secs_to_dtime(sb[19][3])
   #sb[20][3] = secs_to_dtime(sb[20][3])
   sb[21][3] = read_opt(sb[21][3], read_struct("s_creator_os.opts"))
-  #sb[22][3] = read_opt(sb[22][3], read_struct("s_rev_level.opts"))
-  #sb[28][3] = read_flags(sb[28][3], read_struct("s_feature_compat.flags"))
-  #sb[29][3] = read_flags(sb[29][3], read_struct("s_feature_incompat.flags"))
-  #sb[30][3] = read_flags(sb[30][3], read_struct("s_feature_ro_compat.flags"))
-  #sb[43][3] = read_opt(sb[43][3], read_struct("s_def_hash_version.opts"))
-  #sb[46][3] = read_flags(sb[46][3], read_struct("s_default_mount_opts.flags"))
-  #sb[48][3] = secs_to_dtime(sb[48][3])
-  #sb[62][3] = 2 ** sb[62][3]
-  #sb[71][3] = secs_to_dtime(sb[71][3])
-  #sb[76][3] = secs_to_dtime(sb[76][3])
+  sb[22][3] = read_opt(sb[22][3], read_struct("s_rev_level.opts"))
+  sb[28][3] = read_flags(sb[28][3], read_struct("s_feature_compat.flags"))
+  sb[29][3] = read_flags(sb[29][3], read_struct("s_feature_incompat.flags"))
+  sb[30][3] = read_flags(sb[30][3], read_struct("s_feature_ro_compat.flags"))
+  sb[43][3] = read_opt(sb[43][3], read_struct("s_def_hash_version.opts"))
+  sb[46][3] = read_flags(sb[46][3], read_struct("s_default_mount_opts.flags"))
+  sb[48][3] = secs_to_dtime(sb[48][3])
+  sb[55][3] = read_flags(sb[55][3], read_struct("s_flags.flags"))
+  sb[60][3] = 2 ** sb[60][3]
+  sb[69][3] = secs_to_dtime(sb[69][3])
+  sb[74][3] = secs_to_dtime(sb[74][3])
   return sb
 
 # ok
@@ -727,7 +728,6 @@ def read_opt(opt, opts):
   #print opt
   
   for option in opts:
-    print option, opt
     if opt == int(option[0]):
       return option[1]
 
