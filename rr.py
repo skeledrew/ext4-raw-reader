@@ -562,7 +562,7 @@ def get_struct_value(struct, label):
       return data[3]
   return "Error: Label " + label + " not found!"
 
-# test
+# ok
 def get_superblock(device, skip):
   """Returns a parsed superblock.
   
@@ -642,7 +642,7 @@ def secs_to_dtime(seconds):
   """
   return time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(float(seconds)))
 
-# ok
+# test
 def read_flags(flags, values):
   """Read a set of flags.
   
@@ -704,7 +704,7 @@ def read_struct(struct_file):
     new_struct.append(line.split(sep))
   return new_struct
 
-# test
+# ok
 def read_opt(opt, opts):
   """Read an option.
   
