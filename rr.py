@@ -749,8 +749,8 @@ def read_opt(opt, opts):
     if opt == int(option[0]):
       return option[1]
 
-# test
-def get_group_desc(device, skip):
+# ok
+def get_group_desc(device, skip, sb):
   """Return an array of parsed block group descriptors.
   
   Created:
@@ -771,7 +771,7 @@ def get_group_desc(device, skip):
   History:
    n/a
   """
-  sb = get_superblock(device, skip)
+  #sb = get_superblock(device, skip)
   block_size = get_struct_value(sb, "s_log_block_size")
   flex_bg = get_struct_value(sb, "s_log_groups_per_flex")  # gives # of bgd
   bgd_file = "ext4_group_desc_32.struct"
@@ -785,7 +785,6 @@ def get_group_desc(device, skip):
   bgd = dump_parse(dd_read(device, bgd_size * flex_bg / DD_BS, bgd_loc), 
 		   file_read(bgd_file), bgd_size, flex_bg)
   b = []
-  
   non_ints = [6, 11]
   
   for arr in range(flex_bg):
@@ -800,6 +799,50 @@ def get_group_desc(device, skip):
     b.append(bgd[arr*12:arr*12+12])
   return b
 
+def get_inode_table(device, skip):
+  """Docstring template.
+  
+  Created:
+   15-06-01
+  Last Modified:
+   15-06-02
+   
+  Params:
+   device - Device/image.
+   skip - Starting block.
+  Return:
+   n/a
+  
+  Notes:
+   15-06-02
+    Code takes way too long to read a single inode table (or am I doing something wrong?). 
+     Need to break it into chunks or find a more efficient method...
+  History:
+   n/a
+  """
+  sb = get_superblock(device, skip)
+  bgd = get_group_desc(device, skip, sb)
+  block_size = get_struct_value(sb, "s_log_block_size")
+  #flex_bg = get_struct_value(sb, "s_log_groups_per_flex")
+  i_file = "ext4_inode.struct"
+  it_loc = get_struct_value(bgd[0], "bg_inode_table_lo") * (block_size / DD_BS)
+  #it_size = (get_struct_value(bgd[1], "bg_inode_table_lo") * (block_size / DD_BS)) - it_loc
+  i_size = get_struct_value(sb, "s_inode_size")
+  it_size = get_struct_value(sb, "s_inodes_per_group")
+  it_arr = []
+  test_num = 2
+  
+  for inc in range(it_size):
+    print dump_parse(dd_read(device, 1, it_loc + inc), file_read(i_file), i_size, 2)
+  #it = dump_parse(dd_read(device, it_size / 2, it_loc), file_read(i_file), i_size, it_size)  # !!!
+  #return dd_read(device, it_size / 2, it_loc)
+  non_ints = [0, 1, 7, 10, 11, 12, 17, 26]
+  
+  #for num in range(26):
+  #  if non_ints.count(num) != 0:
+  #    continue
+  return it
+  
 ### Tests
 #print grep_srch(dd_read("/dev/sdb", 4), "sys")
 #print base_conv("88")
@@ -817,8 +860,8 @@ def get_group_desc(device, skip):
 #print secs_to_dtime(get_struct_value(get_superblock("/dev/sda2", 2), "s_mtime"))
 #print read_flags(get_struct_value(get_superblock("/dev/sda2", 2), "s_state"), read_struct("s_state.flags"))
 #print read_opt(get_struct_value(get_superblock("/dev/sda2", 2), "s_errors"), read_struct("s_errors.opts"))
-print get_group_desc("/dev/sda2", 2)
-
+#print get_group_desc("/dev/sda2", 2, get_superblock("/dev/sda2", 2))
+print get_inode_table("/dev/sda2", 2)
 
 ### Notes:
 # Error caused by unimplemented checkpoint
