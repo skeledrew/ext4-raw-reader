@@ -646,7 +646,7 @@ def secs_to_dtime(seconds):
   Created:
    15-05-30
   Last Modified:
-   n/a
+   15-06-03
    
   Params:
    seconds - Seconds since epoch time.
@@ -656,9 +656,10 @@ def secs_to_dtime(seconds):
   Notes:
    n/a
   History:
-   n/a
+   15-06-03
+    Added ternary operator to check for empty date.
   """
-  return time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(float(seconds)))
+  return 0 if seconds == 0 else time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(float(seconds)))  # ternary op
 
 # test
 def read_flags(flags, values):
@@ -799,7 +800,7 @@ def get_group_desc(device, skip, sb):
     b.append(bgd[arr*12:arr*12+12])
   return b
 
-def get_inode_table(device, skip):
+def get_inode(device, skip, i_num=[11]):
   """Reads inode tables.
   
   Created:
@@ -810,6 +811,7 @@ def get_inode_table(device, skip):
   Params:
    device - Device/image.
    skip - Starting block.
+   i_num - Array of inode numbers to return.
   Return:
    Array of inodes.
   
@@ -834,8 +836,18 @@ def get_inode_table(device, skip):
   #it_size = (get_struct_value(bgd[1], "bg_inode_table_lo") * (block_size / DD_BS)) - it_loc
   i_size = get_struct_value(sb, "s_inode_size")
   it_size = get_struct_value(sb, "s_inodes_per_group")
+  flex_bg = get_struct_value(sb, "s_log_groups_per_flex")
   it = []
-  test_num = 2
+  
+  for num in i_num:
+    if num < 1:
+      # skip invalid inode #s
+      continue
+    index = (num - 1) % it_size
+    blk_num = (num - 1) / it_size
+    flex_grp = 0 # calculate the inode's flex group
+    loc = (num / 2) + (num % 2)
+    inode = dump_parse(dd_read(device, 1, it_loc + inc), file_read(i_file), i_size, 2)
   
   for inc in range(it_size):
     inode = dump_parse(dd_read(device, 1, it_loc + inc), file_read(i_file), i_size, 2)
@@ -852,11 +864,11 @@ def get_inode_table(device, skip):
     inode[3][3] = secs_to_dtime(inode[3][3])
     inode[4][3] = secs_to_dtime(inode[4][3])
     inode[5][3] = secs_to_dtime(inode[5][3])
-    inode[6][3] = 0 if inode[6][3] == 0 else secs_to_dtime(inode[3][3])  # ternary conditional
+    inode[6][3] = secs_to_dtime(inode[3][3])  # ternary conditional
     inode[10][3] = read_flags(inode[10][3], read_struct("i_flags.flags"))
     inode[23][3] = secs_to_dtime(inode[23][3])
     it.append(inode)
-    print inode
+    #print inode
   return it
   
 ### Tests
@@ -877,7 +889,7 @@ def get_inode_table(device, skip):
 #print read_flags(get_struct_value(get_superblock("/dev/sda2", 2), "s_state"), read_struct("s_state.flags"))
 #print read_opt(get_struct_value(get_superblock("/dev/sda2", 2), "s_errors"), read_struct("s_errors.opts"))
 #print get_group_desc("/dev/sda2", 2, get_superblock("/dev/sda2", 2))
-print get_inode_table("/dev/sda2", 2)
+print get_inode("/dev/sda2", 2)
 
 ### Notes:
 # Error caused by unimplemented checkpoint
