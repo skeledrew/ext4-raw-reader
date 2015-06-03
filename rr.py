@@ -800,25 +800,30 @@ def get_group_desc(device, skip, sb):
   return b
 
 def get_inode_table(device, skip):
-  """Docstring template.
+  """Reads inode tables.
   
   Created:
    15-06-01
   Last Modified:
-   15-06-02
+   15-06-03
    
   Params:
    device - Device/image.
    skip - Starting block.
   Return:
-   n/a
+   Array of inodes.
   
   Notes:
    15-06-02
     Code takes way too long to read a single inode table (or am I doing something wrong?). 
      Need to break it into chunks or find a more efficient method...
+   15-06-03
+    Should skip processing empty inodes. Can use inode bitmap or check dump.
+    Change func to return a single or group of inodes, not the table(s).
+    Should store sb and bgd in a global var to prevent repeated loading on multiple calls.
   History:
-   n/a
+   15-06-03
+    Reduced processing time by returning an i_table subset.
   """
   sb = get_superblock(device, skip)
   bgd = get_group_desc(device, skip, sb)
@@ -829,18 +834,29 @@ def get_inode_table(device, skip):
   #it_size = (get_struct_value(bgd[1], "bg_inode_table_lo") * (block_size / DD_BS)) - it_loc
   i_size = get_struct_value(sb, "s_inode_size")
   it_size = get_struct_value(sb, "s_inodes_per_group")
-  it_arr = []
+  it = []
   test_num = 2
   
   for inc in range(it_size):
-    print dump_parse(dd_read(device, 1, it_loc + inc), file_read(i_file), i_size, 2)
+    inode = dump_parse(dd_read(device, 1, it_loc + inc), file_read(i_file), i_size, 2)
   #it = dump_parse(dd_read(device, it_size / 2, it_loc), file_read(i_file), i_size, it_size)  # !!!
   #return dd_read(device, it_size / 2, it_loc)
-  non_ints = [0, 1, 7, 10, 11, 12, 17, 26]
+    non_ints = [0, 1, 7, 10, 11, 12, 17, 26]
   
-  #for num in range(26):
-  #  if non_ints.count(num) != 0:
-  #    continue
+    for fld in range(26):
+      if non_ints.count(fld) != 0:
+        continue
+      #print fld, inode[fld][3]
+      inode[fld][3] = int(inode[fld][3])
+    inode[0][3] = read_flags(inode[0][3], read_struct("i_mode.flags"))
+    inode[3][3] = secs_to_dtime(inode[3][3])
+    inode[4][3] = secs_to_dtime(inode[4][3])
+    inode[5][3] = secs_to_dtime(inode[5][3])
+    inode[6][3] = 0 if inode[6][3] == 0 else secs_to_dtime(inode[3][3])  # ternary conditional
+    inode[10][3] = read_flags(inode[10][3], read_struct("i_flags.flags"))
+    inode[23][3] = secs_to_dtime(inode[23][3])
+    it.append(inode)
+    print inode
   return it
   
 ### Tests
